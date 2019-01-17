@@ -1,6 +1,6 @@
 var following = new Array();
 var read_comments=new Array();
-
+var unread = new Array();
 window.onload = function(){
     chrome.storage.sync.get(null,function(result){
         if(typeof result.following != undefined){
@@ -9,7 +9,7 @@ window.onload = function(){
                 following = result.following;
         }else{
             chrome.storage.sync.set({'following':following},function(){
-                console.log("set the array for first time");
+                console.log("set the following array for first time");
             })
         }
     });
@@ -56,11 +56,11 @@ function unfollow_handler(){
 }
 
 async function getTitle(id){
-    const blogEntry = fetch('http://codeforces.com/api/blogEntry.view?blogEntryId=${id}');
+    const blogEntry = fetch('http://codeforces.com/api/blogEntry.view?blogEntryId='+id.toString());
     const response= await blogEntry;
     const jsonData = await response.json();
-    console.log(jsonData.title);
-    return jsonData.title;
+    console.log("title: "+ jsonData.result.title.split(0,3));
+    return jsonData.result.title;
 }
 
 async function job(){
@@ -71,24 +71,25 @@ async function job(){
                 following = obj.following;
         }else{
             chrome.storage.sync.set({'following':following},function(){
-                console.log("set the array for first time");
-            })
+                console.log("set the following in job for first time");
+            });
         }
         chrome.storage.local.get(null,function(result){
-            if(typeof result.read_comments !== undefined){
-                console.log("here");
+            if(result.read_comments !== undefined){
+                console.log(result);
                 if(result.read_comments.length != 0)
                     read_comments = result.read_comments;
             }else{
-                chrome.storage.sync.set({'read_comments':read_comments},function(){
-                    console.log("set the array for first time");
-                })
+                chrome.storage.local.set({'read_comments':read_comments},function(){
+                    console.log("set the read_comments for first time");
+                });
             }
         });
         var api = "http://codeforces.com/api/blogEntry.comments?blogEntryId=";
         for(let i=0;i<following.length;++i){
             if(following[i]==0)
                 continue;
+            console.log("working on: "+following[i]);
             var URL = api+following[i].toString();
             const fetchResult = fetch(URL);
             const response = await fetchResult;
@@ -102,14 +103,24 @@ async function job(){
                         cnt++;
                     }
                 }
-                var element = document.createElement("li");
-                element.textContent = getTitle(following[i]);
-                var cntelement = document.createElement("p");
-                cntelement.textContent = "Unread = ${cnt}";
+                var element = document.createElement("ol");
+                var t = await getTitle(following[i]);
+                element.textContent = t.slice(3,-4);
+                var cntelement = document.createElement("p");   
+                cntelement.textContent = "Unread = "+cnt;
+                console.log(following[i] + " has "+ cnt + " unread");
                 element.append(cntelement);
+                var url = api+following[i];
+                console.log("url: "+url);
+
+                var ee = document.createElement("div");
+                ee.innerHTML = "<ol><strong><a href = ${url}>"+t.slice(3,-4)+"</a></strong></ol>";
+
+                document.getElementById('data').append(ee);
+                console.log("added to extension");
             }
         }
     });
 }
 
-setTimeout(job,1000);
+setInterval(job,10000);
