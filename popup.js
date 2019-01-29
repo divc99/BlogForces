@@ -114,7 +114,7 @@ async function job(){
                 console.log("url: "+url);
 
                 var ee = document.createElement("div");
-                ee.innerHTML = "<ol><strong><a href = ${url}>"+t.slice(3,-4)+"</a></strong></ol>";
+                ee.innerHTML = "<ol><strong><a href = ${url}>"+t.slice(3,-4)+<+"</a></strong></ol>";
 
                 document.getElementById('data').append(ee);
                 console.log("added to extension");
